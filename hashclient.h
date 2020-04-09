@@ -11,3 +11,12 @@ Refrences
 https://en.wikibooks.org/wiki/C_Programming/Networking_in_UNIX
 
 */
+union initialPayload
+{
+    struct
+    {
+        int hash;
+        int sz;
+    };
+    char data[sizeof(int)*2];
+};
