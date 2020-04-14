@@ -11,6 +11,8 @@ Refrences
 https://en.wikibooks.org/wiki/C_Programming/Networking_in_UNIX
 
 */
+#DEFINE MAXIPLEN 16;
+
 union initialPayload
 {
     struct
