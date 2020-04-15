@@ -30,10 +30,37 @@ int sendLoop(int socket, char *file, int hash)
     printf hash output, filename
     free(buffer)
     */
+    int len, count = 0;
+    int fpos = 0;
+    char *buffer = malloc(1*sizeof(int));
+    char *sendBuffer = malloc(1024*sizeof(char));
     union initialPayload data;
     data.hash = hash;
-    data.sz = 15;
-    printf("data is %c, thats it\n", data.data[0]);
+    FILE *f = fopen(file, "rb");
+    fseek(f, 0, SEEK_END);
+    data.sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    send(socket, data.data, sizeof(data), 0);
+    while(fpos != data.sz)
+    {
+		count++;
+		len = fread(sendBuffer, 1, 1, f);
+		if(len == 0)
+		{
+			printf("Breaking out of read loop after %d times\n", count);
+			break;
+		}
+		printf("%d\n", len);
+		fpos += len;
+		send(socket, sendBuffer, len, 0);
+	}
+    len = recv(socket, buffer, 1*sizeof(int), 0);
+    memset(sendBuffer, 0, 1024);
+    recv(socket, sendBuffer, 1024, 0);
+    printf("%s \t%s\n", sendBuffer, file);
+END:    
+    free(buffer);
+    free(sendBuffer);
     return 0;
 }
 
@@ -69,7 +96,7 @@ int main(int argc, char *argv[])
     }
     dest.sin_port = htons(port); /* set destination port number */
     strncpy(hashType, argv[ittrStart++], 10);
-    if(checkHashType == 0)
+    if(checkHashType(hashType) == 0)
     {
         printf("invalid hash type requested\n");
         ret = -2;
@@ -88,7 +115,7 @@ int main(int argc, char *argv[])
     connect(mysocket, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
     for (int i = ittrStart; i < argc; i++)
     {
-        sendLoop(mysocket, argv[i], hashSelection);
+        sendLoop(mysocket, argv[i], 1);
         printf("%s\n", argv[i]);
     }
     
