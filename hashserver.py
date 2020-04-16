@@ -2,7 +2,7 @@ import socket
 import hashlib
 import struct
 import time
-
+import argparse
 
 def getFile(sock):
 	hashDict = {1: hashlib.md5,
@@ -17,7 +17,6 @@ def getFile(sock):
 	fname = "{}".format(time.time())
 	f = open(fname, "wb")
 	data = sock.recv(1024)
-	print(data)
 	num, flen = struct.unpack("iq", data)
 	print("num is: ", num, " flen is: ",flen)
 	if num not in hashDict.keys():
@@ -55,17 +54,27 @@ def serverLoop(sock):
 		print(2)
 		conn, addr = sock.accept()
 		print(3)
-		getFile(conn)
+		while True:
+			getFile(conn)
+			data = conn.recv(1024)
+			num, flen = struct.unpack("iq", data)
+			print("num is ", num)
+			if num == 0:
+				break
 		print(4)
 	pass
 
 
 def main():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--port", type=int, default=1234, dest="PORT")
+	parser.add_argument("--host", type=str, default="127.0.0.1", dest="HOST")
+	args = parser.parse_args()
 	HOST = "127.0.0.1"
 	PORT = 1234
 	print("-1")
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.bind((HOST, PORT))
+	sock.bind((args.HOST, args.PORT))
 	print("0")
 	serverLoop(sock)
 

@@ -6,7 +6,25 @@
 
 int checkHashType(char *hashType)
 {
-    return 1;
+	if(strcmp("md5", hashType) == 0)
+		return 1;
+	if(strcmp("sha1", hashType) == 0)
+		return 2;
+	if(strcmp("sha224", hashType) == 0)
+		return 3;
+	if(strcmp("sha256", hashType) == 0)
+		return 4;
+	if(strcmp("sha384", hashType) == 0)
+		return 5;
+	if(strcmp("sha512", hashType) == 0)
+		return 6;
+	if(strcmp("shake_128", hashType) == 0)
+		return 7;
+	if(strcmp("shake_256", hashType) == 0)
+		return 8;
+	if(strcmp("blake2b", hashType) == 0)
+		return 9;
+	return 0;
 }
 
 int checkPort(char *arg)
@@ -43,8 +61,17 @@ int sendLoop(int socket, char *file, int hash)
     send(socket, data.data, sizeof(data), 0);
     while(fpos != data.sz)
     {
+		printf("fpos = %d, data.sz = %ld\n", fpos, data.sz);
 		count++;
-		len = fread(sendBuffer, 1, 1, f);
+		if(fpos - data.sz > 1024)
+		{
+			len = fread(sendBuffer, 1, 1024, f);
+		}
+		else
+		{
+			len = fread(sendBuffer, 1, data.sz - fpos, f);
+		}
+		
 		if(len == 0)
 		{
 			printf("Breaking out of read loop after %d times\n", count);
@@ -66,11 +93,13 @@ END:
 
 int main(int argc, char *argv[])
 {
+	int hashNum = 0;
     int ret = 0;
     int port = 0;
     int ittrStart = 1;
     int mysocket; /* socket used to listen for incoming connections */
     int hashSelection = 0;
+    union initialPayload data;
     char* hashType = malloc(10*sizeof(char));
     memset(hashType, 0, 10); // zero the memory for hashType
     char* IPAddr = malloc(16*sizeof(char)); // 15 characters is the max for an IP address considering 4 octets and 3 dots, the 16th is to hold the null terminator
@@ -96,6 +125,7 @@ int main(int argc, char *argv[])
     }
     dest.sin_port = htons(port); /* set destination port number */
     strncpy(hashType, argv[ittrStart++], 10);
+	hashNum = checkHashType(hashType);
     if(checkHashType(hashType) == 0)
     {
         printf("invalid hash type requested\n");
@@ -115,13 +145,28 @@ int main(int argc, char *argv[])
     connect(mysocket, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
     for (int i = ittrStart; i < argc; i++)
     {
-        sendLoop(mysocket, argv[i], 1);
+        sendLoop(mysocket, argv[i], hashNum);
+        if(i +1 < argc)
+        {
+			data.hash = 1;
+			data.sz = 0;
+			send(mysocket, data.data, sizeof(data), 0);
+			printf("sending to continue\n");
+		}
         printf("%s\n", argv[i]);
     }
     
+    
 end:
+	data.hash = 0;
+	send(mysocket, data.data, sizeof(data), 0);
+	printf("sending to finish\n");
     free(hashType);
     free(IPAddr);
+    if(ret < 0)
+    {
+		printf("%s [port] <hash type> <ip address> <files>\n", argv[0]);
+	}
     return ret;
 }
 
