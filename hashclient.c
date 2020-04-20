@@ -61,9 +61,8 @@ int sendLoop(int socket, char *file, int hash)
     send(socket, data.data, sizeof(data), 0);
     while(fpos != data.sz)
     {
-		printf("fpos = %d, data.sz = %ld\n", fpos, data.sz);
 		count++;
-		if(fpos - data.sz > 1024)
+		if(data.sz - fpos > 1024)
 		{
 			len = fread(sendBuffer, 1, 1024, f);
 		}
@@ -74,10 +73,8 @@ int sendLoop(int socket, char *file, int hash)
 		
 		if(len == 0)
 		{
-			printf("Breaking out of read loop after %d times\n", count);
 			break;
 		}
-		printf("%d\n", len);
 		fpos += len;
 		send(socket, sendBuffer, len, 0);
 	}
@@ -85,7 +82,6 @@ int sendLoop(int socket, char *file, int hash)
     memset(sendBuffer, 0, 1024);
     recv(socket, sendBuffer, 1024, 0);
     printf("%s \t%s\n", sendBuffer, file);
-END:    
     free(buffer);
     free(sendBuffer);
     return 0;
@@ -145,28 +141,28 @@ int main(int argc, char *argv[])
     connect(mysocket, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
     for (int i = ittrStart; i < argc; i++)
     {
+    	printf("sending %s\n", argv[i]);
         sendLoop(mysocket, argv[i], hashNum);
         if(i +1 < argc)
         {
 			data.hash = 1;
 			data.sz = 0;
 			send(mysocket, data.data, sizeof(data), 0);
-			printf("sending to continue\n");
-		}
-        printf("%s\n", argv[i]);
+	}
     }
     
     
-end:
-	data.hash = 0;
-	send(mysocket, data.data, sizeof(data), 0);
-	printf("sending to finish\n");
+    data.hash = 0;
+    send(mysocket, data.data, sizeof(data), 0);
+    end:
+
     free(hashType);
     free(IPAddr);
     if(ret < 0)
     {
 		printf("%s [port] <hash type> <ip address> <files>\n", argv[0]);
-	}
+		printf("Supported hash types are: md5, sha1, sha224, sha256, sha384, sha512, shake_128, shake_256, blake2b\n");
+    }
     return ret;
 }
 
