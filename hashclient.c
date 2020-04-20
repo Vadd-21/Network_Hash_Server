@@ -145,9 +145,9 @@ int main(int argc, char *argv[])
         sendLoop(mysocket, argv[i], hashNum);
         if(i +1 < argc)
         {
-			data.hash = 1;
-			data.sz = 0;
-			send(mysocket, data.data, sizeof(data), 0);
+		data.hash = 1;
+		data.sz = 0;
+		send(mysocket, data.data, sizeof(data), 0);
 	}
     }
     

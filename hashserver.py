@@ -18,7 +18,7 @@ def getFile(sock):
 		    9: hashlib.blake2b}
 	fname = "{}".format(time.time())
 	f = open(fname, "wb")
-	data = sock.recv(1024)
+	data = sock.recv(16)
 	num, flen = struct.unpack("iq", data)
 	if num not in hashDict.keys():
 		return -1
@@ -31,32 +31,32 @@ def getFile(sock):
 		f.write(data)
 	f.seek(0)
 	f.close()
-	print(num)
 	if num == 7 or num == 8:
 		output = hashDict[num](open(fname, "rb").read()).hexdigest(255)
 	else:
 		output = hashDict[num](open(fname, "rb").read()).hexdigest()
-	print(output)
 	f.close()
 	sendOutput(sock, output)
+	return 1
 
 
 def sendOutput(sock, output):
 	outlen = struct.pack("i", len(output))
 	sock.send(outlen)
 	sock.send(output.encode())
-	pass
 
 
 def serverLoop(sock):
 	sock.listen(1)
 	while True:
+		print("waiting for connection")
 		conn, addr = sock.accept()
+		print("connected to {}".format(addr[0]))
 		while True:
-			getFile(conn)
+			if getFile(conn) == -1:
+				break
 			data = conn.recv(1024)
 			num, flen = struct.unpack("iq", data)
-			print("num is ", num)
 			if num == 0:
 				break
 	pass
