@@ -1,0 +1,76 @@
+\documentclass[12pt]{article}
+\usepackage{lingmacros}
+\usepackage{graphicx}
+
+
+\begin{document}
+
+\title{Primm Skills assessment}
+\author{David Scott Primm}
+\maketitle
+\pagebreak
+
+\tableofcontents
+\pagebreak 
+\section{Project overview}
+This is a skill assessment from Novetta\\
+Write a network server and client for cryptographically hashing files. The hashing server will be listening on the network. The client will connect to the server, indicate the desired hashing algorithm, upload the file, and receive the hash of the file. The client will then display the hash.
+\section{hashclient}
+hashclient takes arguments from the command line, and sends its specified files to hashserver, receiving the hash value in return from each file sent
+\subsection{requirements}
+\begin{itemize}
+	\item The client must be written in C.
+	\item The client must compile using gcc on Ubuntu 16.04 or 18.04.
+	\item The client will be executed on Ubuntu 16.04 or 18.04.
+	\item The client must accept the following arguments:
+	\subitem Port: The TCP port to connect on. This argument is optional.
+	\subitem Address: The IP address where the server is listening. This argument is mandatory.
+	\subitem Hash name: The name of the hashing algorithm to use. The following values should be supported: sha1, sha256, sha512, and md5. This argument is mandatory.
+	\subitem Filename: The name of the file or files to hash. A minimum of one filename is required with no maximum.
+	\subitem Example usage: hashclient [-p port] <address> <hashname> <filename>…
+	\item The client will print the name and hash (in hex format) of each file specified to stdout.
+\end{itemize}
+\subsection{usage}
+\begin{verbatim}
+hashclient [port] <hash> <IP> <file...>
+[port] is optional, it will default to 2345 
+<hash> is the requested hash type to be used, avaliable options are md5,
+     sha1, sha224, sha256, sha384, sha512, shake_128, shake_256, blake2b
+<IP> is the IP address of the hashserver
+<file...> is the list of space separated files to be hashed
+\end{verbatim}
+\subsection{example usage}
+\begin{verbatim}
+./hashclient md5 127.0.0.1 makefile
+sending makefile
+ae618bad09eca643e57480ef3922a98e		makefile
+\end{verbatim}
+\subsection{issues}
+If hashclient is ran with no files, it will simply send a termination message to the hashserver.\\
+If hashclient sends the same file multiple times, on occasion the hashserver crashes, the cause was not found.
+\section{hashserver}
+hashserver takes arguments from the command line, and begins listening for a connection on its specified port, on connection it writes the received file out to a filename made from calling time.time, it then hashes the received file, and sends the hash back to the hashclient
+\subsection{requirements}
+\begin{itemize}
+	\item The server must be written in python. 
+	\item The server will be executed using python 3.
+	\item The server must accept the following arguments:
+	\subitem Port: The TCP port to listen on. This argument is optional.
+\end{itemize}
+\subsection{usage}
+\begin{verbatim}
+hashserver.py [port] [IP]
+[port] is optional, it will default to 2345 
+[IP] is the IP address hashserver will bind to, defaults to 127.0.0.1
+\end{verbatim}
+\subsection{example usage}
+\begin{verbatim}
+python3 hashserver.py
+waiting for connection
+connected to 127.0.0.1
+waiting for connection
+\end{verbatim}
+\subsection{issues}
+hashserver is designed to run in python3 only, it should terminate if ran in an older version of python\\
+hashserver sometimes crashes when receiving the same file multiple times, the cause of this was not found.
+\end{document}
